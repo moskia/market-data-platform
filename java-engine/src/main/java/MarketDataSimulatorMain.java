@@ -4,31 +4,36 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class MarketDataSimulatorMain {
-    public static void main(String[] args) throws InterruptedException {
-        SimulatedExchangeFeedHandler exA =
-            new SimulatedExchangeFeedHandler("EX_A", List.of("AAPL", "MSFT", "GOOG"), 300);
+  public static void main(String[] args) throws InterruptedException {
+    try (KafkaQuotePublisher publisher = new KafkaQuotePublisher("localhost:9092")) {
+      List<String> symbols = List.of("APPL", "MSFT", "GOOG");
 
-        SimulatedExchangeFeedHandler exB =
-            new SimulatedExchangeFeedHandler("EX_B", List.of("AAPL", "MSFT", "GOOG"), 500);
+      List<SimulatedExchangeFeedHandler> exchanges =
+          List.of(
+              new SimulatedExchangeFeedHandler("EX_A", symbols, 300, publisher),
+              new SimulatedExchangeFeedHandler("EX_B", symbols, 500, publisher),
+              new SimulatedExchangeFeedHandler("EX_C", symbols, 800, publisher));
 
-        SimulatedExchangeFeedHandler exC = 
-            new SimulatedExchangeFeedHandler("EX_C", List.of("AAPL", "MSFT", "GOOG"), 800);
+      ExecutorService executor = Executors.newFixedThreadPool(3);
 
-        List<SimulatedExchangeFeedHandler> exchanges = List.of(exA, exB, exC);
-
-        ExecutorService executor = Executors.newFixedThreadPool(3);
-        for (SimulatedExchangeFeedHandler exchange: exchanges) {
-            exchange.start();
-            executor.submit(exchange);
+      try {
+        for (SimulatedExchangeFeedHandler exchange : exchanges) {
+          exchange.start();
+          executor.execute(exchange);
         }
 
-        Thread.sleep(5_000);
-
-
-        for (SimulatedExchangeFeedHandler exchange: exchanges) {
-            exchange.stop();
+        Thread.sleep(10_000);
+      } finally {
+        for (SimulatedExchangeFeedHandler exchange : exchanges) {
+          exchange.stop();
         }
+
         executor.shutdownNow();
-        executor.awaitTermination(5, TimeUnit.SECONDS);
+
+        if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+          System.err.println("Feed threads did not stop in time");
+        }
+      }
     }
+  }
 }

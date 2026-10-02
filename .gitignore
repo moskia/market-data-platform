@@ -1,0 +1,38 @@
+# Maven build output
+target/
+**/target/
+
+# Compiled Java files
+*.class
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Java crash logs
+hs_err_pid*
+replay_pid*
