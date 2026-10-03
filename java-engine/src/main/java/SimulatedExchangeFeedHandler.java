@@ -13,6 +13,7 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
   private final Map<String, Double> prices = new HashMap<>();
   private final long meanIntervalMs;
   private final KafkaQuotePublisher publisher;
+  private static final double DROP_PROBABILITY = 0.2;
 
   public SimulatedExchangeFeedHandler(
       String exchangeId, List<String> symbols, long meanIntervalMs, KafkaQuotePublisher publisher) {
@@ -45,11 +46,19 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
   @Override
   public void run() {
     while (running & !Thread.currentThread().isInterrupted()) {
-      publisher.publish(generateQuote());
-
       try {
+        RawQuoteEvent quote = generateQuote();
+
+        if (random.nextDouble() < DROP_PROBABILITY) {
+          System.out.println("Dropped " + quote.exchangeId() + " #" + quote.sequenceNumber());
+        } else {
+          int latencyMs = 1 + random.nextInt(50);
+          Thread.sleep(latencyMs);
+
+          publisher.publish(markReceived(quote));
+        }
+
         long delaysMs = Math.max(1, (long) (-meanIntervalMs * Math.log(1.0 - random.nextDouble())));
-        System.out.println("Next update in " + delaysMs + " ms");
         Thread.sleep(delaysMs);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -70,5 +79,17 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
     Instant now = Instant.now();
 
     return new RawQuoteEvent(exchangeId, symbol, side, price, quantity, ++sequenceNumber, now, now);
+  }
+
+  private RawQuoteEvent markReceived(RawQuoteEvent quote) {
+    return new RawQuoteEvent(
+        quote.exchangeId(),
+        quote.symbol(),
+        quote.side(),
+        quote.price(),
+        quote.quantity(),
+        quote.sequenceNumber(),
+        quote.exchangeTimestamp(),
+        Instant.now());
   }
 }
