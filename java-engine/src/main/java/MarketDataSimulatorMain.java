@@ -28,9 +28,10 @@ public class MarketDataSimulatorMain {
           exchange.stop();
         }
 
-        executor.shutdownNow();
+        executor.shutdown();
 
         if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+          executor.shutdownNow();
           System.err.println("Feed threads did not stop in time");
         }
       }

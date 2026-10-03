@@ -1,8 +1,11 @@
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
   private final String exchangeId;
@@ -13,7 +16,13 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
   private final Map<String, Double> prices = new HashMap<>();
   private final long meanIntervalMs;
   private final KafkaQuotePublisher publisher;
-  private static final double DROP_PROBABILITY = 0.2;
+  private static final double DROP_PROBABILITY = 0.01;
+  private static final double REORDER_PROBABILITY = 0.02;
+
+  private record PendingQuote(RawQuoteEvent quote, long deliveryTimeNanos) {}
+
+  private final PriorityQueue<PendingQuote> pendingQuotes =
+      new PriorityQueue<>(Comparator.comparingLong(PendingQuote::deliveryTimeNanos));
 
   public SimulatedExchangeFeedHandler(
       String exchangeId, List<String> symbols, long meanIntervalMs, KafkaQuotePublisher publisher) {
@@ -45,24 +54,37 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
 
   @Override
   public void run() {
-    while (running & !Thread.currentThread().isInterrupted()) {
-      try {
-        RawQuoteEvent quote = generateQuote();
+    long nextGenerationTime = System.nanoTime();
 
-        if (random.nextDouble() < DROP_PROBABILITY) {
-          System.out.println("Dropped " + quote.exchangeId() + " #" + quote.sequenceNumber());
-        } else {
-          int latencyMs = 1 + random.nextInt(50);
-          Thread.sleep(latencyMs);
+    try {
+      while (running || !pendingQuotes.isEmpty()) {
+        long now = System.nanoTime();
 
-          publisher.publish(markReceived(quote));
+        if (running && nextGenerationTime - now <= 0) {
+          scheduleQuote();
+          nextGenerationTime = System.nanoTime() + nextArrivalDelayNanos();
         }
 
-        long delaysMs = Math.max(1, (long) (-meanIntervalMs * Math.log(1.0 - random.nextDouble())));
-        Thread.sleep(delaysMs);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+        publishReadyQuotes();
+
+        if (!running && pendingQuotes.isEmpty()) {
+          break;
+        }
+
+        long nextWakeTime = running ? nextGenerationTime : pendingQuotes.peek().deliveryTimeNanos();
+
+        if (!pendingQuotes.isEmpty()) {
+          nextWakeTime = Math.min(nextWakeTime, pendingQuotes.peek().deliveryTimeNanos());
+        }
+
+        long waitNanos = nextWakeTime - System.nanoTime();
+
+        if (waitNanos > 0) {
+          TimeUnit.NANOSECONDS.sleep(waitNanos);
+        }
       }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -91,5 +113,40 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
         quote.sequenceNumber(),
         quote.exchangeTimestamp(),
         Instant.now());
+  }
+
+  private long nextArrivalDelayNanos() {
+    double delayMs = -meanIntervalMs * Math.log(1.0 - random.nextDouble());
+    return Math.max(1L, (long) (delayMs * 1_000_000));
+  }
+
+  private void scheduleQuote() {
+    RawQuoteEvent quote = generateQuote();
+
+    if (random.nextDouble() < DROP_PROBABILITY) {
+      System.out.println("Dropped " + exchangeId + " #" + quote.sequenceNumber());
+      return;
+    }
+
+    long latencyMs = 1 + random.nextInt(50);
+
+    if (random.nextDouble() < REORDER_PROBABILITY) {
+      latencyMs += 3 * meanIntervalMs;
+
+      System.out.println(
+          "Delayed " + exchangeId + " #" + quote.sequenceNumber() + " by " + latencyMs + " ms");
+    }
+
+    long deliveryTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(latencyMs);
+
+    pendingQuotes.add(new PendingQuote(quote, deliveryTime));
+  }
+
+  private void publishReadyQuotes() {
+    while (!pendingQuotes.isEmpty()
+        && pendingQuotes.peek().deliveryTimeNanos() - System.nanoTime() <= 0) {
+      RawQuoteEvent quote = pendingQuotes.poll().quote();
+      publisher.publish(markReceived(quote));
+    }
   }
 }
