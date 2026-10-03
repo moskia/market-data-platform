@@ -20,7 +20,7 @@ $KAFKA \
     --bootstrap-server "$BROKER" \
     --create \
     --if-not-exists \
-    --topic consolidate-book \
+    --topic consolidated-book \
     --partitions 3 \
     --replication-factor 1
 

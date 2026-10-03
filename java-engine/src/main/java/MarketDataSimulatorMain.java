@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 public class MarketDataSimulatorMain {
   public static void main(String[] args) throws InterruptedException {
     try (KafkaQuotePublisher publisher = new KafkaQuotePublisher("localhost:9092")) {
-      List<String> symbols = List.of("APPL", "MSFT", "GOOG");
+      List<String> symbols = List.of("AAPL", "MSFT", "GOOG");
 
       List<SimulatedExchangeFeedHandler> exchanges =
           List.of(
