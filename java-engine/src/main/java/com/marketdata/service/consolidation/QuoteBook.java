@@ -1,3 +1,6 @@
+package com.marketdata.service.consolidation;
+
+import com.marketdata.model.RawQuoteEvent;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;

@@ -1,3 +1,8 @@
+package com.marketdata.app;
+
+import com.marketdata.kafka.KafkaConfig;
+import com.marketdata.kafka.simulator.KafkaQuotePublisher;
+import com.marketdata.service.simulator.SimulatedExchangeFeedHandler;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -5,14 +10,14 @@ import java.util.concurrent.TimeUnit;
 
 public class MarketDataSimulatorMain {
   public static void main(String[] args) throws InterruptedException {
-    try (KafkaQuotePublisher publisher = new KafkaQuotePublisher("localhost:9092")) {
+    try (KafkaQuotePublisher publisher = new KafkaQuotePublisher(KafkaConfig.BOOTSTRAP_SERVERS)) {
       List<String> symbols = List.of("AAPL", "MSFT", "GOOG");
 
       List<SimulatedExchangeFeedHandler> exchanges =
           List.of(
-              new SimulatedExchangeFeedHandler("EX_A", symbols, 300, publisher),
-              new SimulatedExchangeFeedHandler("EX_B", symbols, 500, publisher),
-              new SimulatedExchangeFeedHandler("EX_C", symbols, 800, publisher));
+              new SimulatedExchangeFeedHandler("EX_A", symbols, 300, publisher::publish),
+              new SimulatedExchangeFeedHandler("EX_B", symbols, 500, publisher::publish),
+              new SimulatedExchangeFeedHandler("EX_C", symbols, 800, publisher::publish));
 
       ExecutorService executor = Executors.newFixedThreadPool(3);
 

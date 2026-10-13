@@ -1,3 +1,8 @@
+package com.marketdata.check;
+
+import com.marketdata.model.ConsolidatedQuote;
+import com.marketdata.model.RawQuoteEvent;
+import com.marketdata.service.consolidation.QuoteBook;
 import java.time.Duration;
 import java.time.Instant;
 

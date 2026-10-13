@@ -1,3 +1,6 @@
+package com.marketdata.service.simulator;
+
+import com.marketdata.model.RawQuoteEvent;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -6,6 +9,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
   private final String exchangeId;
@@ -15,7 +19,7 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
   private long sequenceNumber = 0;
   private final Map<String, Double> prices = new HashMap<>();
   private final long meanIntervalMs;
-  private final KafkaQuotePublisher publisher;
+  private final Consumer<RawQuoteEvent> output;
   private static final double DROP_PROBABILITY = 0.01;
   private static final double REORDER_PROBABILITY = 0.02;
 
@@ -25,7 +29,10 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
       new PriorityQueue<>(Comparator.comparingLong(PendingQuote::deliveryTimeNanos));
 
   public SimulatedExchangeFeedHandler(
-      String exchangeId, List<String> symbols, long meanIntervalMs, KafkaQuotePublisher publisher) {
+      String exchangeId,
+      List<String> symbols,
+      long meanIntervalMs,
+      Consumer<RawQuoteEvent> output) {
     if (meanIntervalMs <= 0) {
       throw new IllegalArgumentException("meanIntervalMs must be positive");
     }
@@ -33,7 +40,7 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
     this.exchangeId = exchangeId;
     this.symbols = symbols;
     this.meanIntervalMs = meanIntervalMs;
-    this.publisher = publisher;
+    this.output = output;
 
     for (String symbol : symbols) {
       prices.put(symbol, 100.0);
@@ -146,7 +153,7 @@ public class SimulatedExchangeFeedHandler implements FeedHandler, Runnable {
     while (!pendingQuotes.isEmpty()
         && pendingQuotes.peek().deliveryTimeNanos() - System.nanoTime() <= 0) {
       RawQuoteEvent quote = pendingQuotes.poll().quote();
-      publisher.publish(markReceived(quote));
+      output.accept(markReceived(quote));
     }
   }
 }

@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.amine.marketdata</groupId>
+    <groupId>com.marketdata</groupId>
     <artifactId>java-engine</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 

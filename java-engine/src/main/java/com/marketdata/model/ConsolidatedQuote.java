@@ -1,3 +1,5 @@
+package com.marketdata.model;
+
 import java.time.Instant;
 import java.util.Objects;
 

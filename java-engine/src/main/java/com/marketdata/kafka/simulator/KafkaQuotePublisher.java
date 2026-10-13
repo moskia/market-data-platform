@@ -1,10 +1,10 @@
+package com.marketdata.kafka.simulator;
+
+import com.marketdata.kafka.JsonMapper;
+import com.marketdata.kafka.KafkaConfig;
+import com.marketdata.model.RawQuoteEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
@@ -13,18 +13,8 @@ public class KafkaQuotePublisher implements AutoCloseable {
   private final KafkaProducer<String, String> producer;
 
   public KafkaQuotePublisher(String bootstrapServers) {
-
-    mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-    Properties config = new Properties();
-    config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    config.put(ProducerConfig.ACKS_CONFIG, "all");
-
-    producer = new KafkaProducer<>(config);
+    mapper = JsonMapper.create();
+    producer = new KafkaProducer<>(KafkaConfig.producerProperties(bootstrapServers));
   }
 
   public void publish(RawQuoteEvent quote) {

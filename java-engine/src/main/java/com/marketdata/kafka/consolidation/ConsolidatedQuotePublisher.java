@@ -1,14 +1,13 @@
+package com.marketdata.kafka.consolidation;
+
+import com.marketdata.kafka.JsonMapper;
+import com.marketdata.kafka.KafkaConfig;
+import com.marketdata.model.ConsolidatedQuote;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
-
-import java.util.Properties;
 
 public class ConsolidatedQuotePublisher implements AutoCloseable {
 
@@ -16,25 +15,8 @@ public class ConsolidatedQuotePublisher implements AutoCloseable {
     private final KafkaProducer<String, String> producer;
 
     public ConsolidatedQuotePublisher(String bootstrapServers) {
-        mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        Properties properties = new Properties();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                bootstrapServers
-        );
-        properties.put(
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                StringSerializer.class.getName()
-        );
-        properties.put(
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                StringSerializer.class.getName()
-        );
-        properties.put(ProducerConfig.ACKS_CONFIG, "all");
-
-        producer = new KafkaProducer<>(properties);
+        mapper = JsonMapper.create();
+        producer = new KafkaProducer<>(KafkaConfig.producerProperties(bootstrapServers));
     }
 
     public void publish(ConsolidatedQuote quote) {
