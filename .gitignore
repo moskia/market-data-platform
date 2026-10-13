@@ -36,3 +36,6 @@ Thumbs.db
 # Java crash logs
 hs_err_pid*
 replay_pid*
+
+# Vibe wise
+.vibe-wise/
