@@ -11,10 +11,16 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 public class KafkaQuotePublisher implements AutoCloseable {
   private final ObjectMapper mapper;
   private final KafkaProducer<String, String> producer;
+  private final String topic;
 
   public KafkaQuotePublisher(String bootstrapServers) {
+    this(bootstrapServers, KafkaConfig.RAW_FEED_TOPIC);
+  }
+
+  public KafkaQuotePublisher(String bootstrapServers, String topic) {
     mapper = JsonMapper.create();
     producer = new KafkaProducer<>(KafkaConfig.producerProperties(bootstrapServers));
+    this.topic = topic;
   }
 
   public void publish(RawQuoteEvent quote) {
@@ -22,7 +28,7 @@ public class KafkaQuotePublisher implements AutoCloseable {
       String json = mapper.writeValueAsString(quote);
 
       ProducerRecord<String, String> message =
-          new ProducerRecord<>("raw-feed-events", quote.symbol(), json);
+          new ProducerRecord<>(topic, quote.symbol(), json);
 
       producer.send(
           message,

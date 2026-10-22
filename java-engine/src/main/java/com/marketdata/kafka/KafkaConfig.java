@@ -9,6 +9,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 public final class KafkaConfig {
 
   public static final String BOOTSTRAP_SERVERS = "localhost:9092";
+  public static final String RAW_FEED_TOPIC = "raw-feed-events";
+  public static final String CONSOLIDATED_BOOK_TOPIC = "consolidated-book";
 
   private KafkaConfig() {}
 

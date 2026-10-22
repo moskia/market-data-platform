@@ -13,17 +13,23 @@ public class ConsolidatedQuotePublisher implements AutoCloseable {
 
     private final ObjectMapper mapper;
     private final KafkaProducer<String, String> producer;
+    private final String topic;
 
     public ConsolidatedQuotePublisher(String bootstrapServers) {
+        this(bootstrapServers, KafkaConfig.CONSOLIDATED_BOOK_TOPIC);
+    }
+
+    public ConsolidatedQuotePublisher(String bootstrapServers, String topic) {
         mapper = JsonMapper.create();
         producer = new KafkaProducer<>(KafkaConfig.producerProperties(bootstrapServers));
+        this.topic = topic;
     }
 
     public void publish(ConsolidatedQuote quote) {
         try {
             String json = mapper.writeValueAsString(quote);
 
-             producer.send(new ProducerRecord<> ("consolidated-book", quote.symbol(), json), (metadata, error) -> {
+             producer.send(new ProducerRecord<> (topic, quote.symbol(), json), (metadata, error) -> {
                  if (error != null) {
                      System.err.println("Failed to publish consolidated quote: " + error.getMessage());
                  }
