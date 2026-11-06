@@ -248,6 +248,73 @@ class ExchangeTest {
     }
   }
 
+  /** Step 3 of our example: the seller was waiting, so the exchange tells the seller privately. */
+  @Test
+  void ownerOfTheWaitingOrderIsToldAboutTheTrade() {
+    List<Trade> sellerFills = new ArrayList<>();
+    exchange.register("seller", sellerFills::add);
+    SubmitResult ask = exchange.submit("AAPL", "seller", Side.SELL, 10005, 100);
+
+    exchange.submit("AAPL", "buyer", Side.BUY, 10005, 30);
+
+    assertEquals(1, sellerFills.size());
+    assertEquals(ask.orderId(), sellerFills.get(0).sellOrderId());
+    assertEquals(30, sellerFills.get(0).quantity());
+  }
+
+  /** The incoming order's owner already gets the trades back from submit(), so no callback. */
+  @Test
+  void ownerOfTheIncomingOrderIsNotCalledBack() {
+    List<Trade> buyerFills = new ArrayList<>();
+    exchange.register("buyer", buyerFills::add);
+    exchange.submit("AAPL", "seller", Side.SELL, 10005, 100);
+
+    SubmitResult result = exchange.submit("AAPL", "buyer", Side.BUY, 10005, 30);
+
+    assertTrue(buyerFills.isEmpty());
+    assertEquals(1, result.trades().size());
+  }
+
+  @Test
+  void everyWaitingOwnerHitByOneOrderIsTold() {
+    List<Trade> firstFills = new ArrayList<>();
+    List<Trade> secondFills = new ArrayList<>();
+    exchange.register("first", firstFills::add);
+    exchange.register("second", secondFills::add);
+    exchange.submit("AAPL", "first", Side.BUY, 10000, 10);
+    exchange.submit("AAPL", "second", Side.BUY, 9990, 10);
+
+    exchange.submit("AAPL", "seller", Side.SELL, 9990, 15);
+
+    assertEquals(10, firstFills.get(0).quantity());
+    assertEquals(5, secondFills.get(0).quantity());
+  }
+
+  @Test
+  void aReplaceThatTradesTellsTheWaitingOwner() {
+    List<Trade> sellerFills = new ArrayList<>();
+    exchange.register("seller", sellerFills::add);
+    exchange.submit("AAPL", "seller", Side.SELL, 10005, 10);
+    SubmitResult bid = exchange.submit("AAPL", "buyer", Side.BUY, 10000, 10);
+
+    exchange.replace("AAPL", bid.orderId(), 10005, 10);
+
+    assertEquals(1, sellerFills.size());
+  }
+
+  /** By the time the owner hears about a trade, the exchange has finished its own work. */
+  @Test
+  void ownerIsToldOnlyAfterThePricesArePublished() {
+    List<Integer> publishedAtCallback = new ArrayList<>();
+    exchange.register("seller", trade -> publishedAtCallback.add(published.size()));
+    exchange.submit("AAPL", "seller", Side.SELL, 10005, 100);
+
+    exchange.submit("AAPL", "buyer", Side.BUY, 10005, 30);
+
+    assertEquals(List.of(published.size()), publishedAtCallback);
+    assertEquals(2, published.size(), "The first ask, then the reduced ask");
+  }
+
   private RawQuoteEvent last() {
     return published.get(published.size() - 1);
   }

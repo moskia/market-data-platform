@@ -23,12 +23,14 @@ public class Exchange {
   private long sequenceNumber = 0;
 
   /**
-   * Top
+   * Top: best visible price and total on one side
    */
   private record Top(long priceTicks, int quantity) {}
 
   private final Map<String, Top> lastPublishedBids = new HashMap<>();
   private final Map<String, Top> lastPublishedAsks = new HashMap<>();
+
+  private final Map<String, Consumer<Trade>> fillCallbacks = new HashMap<>();
 
   public Exchange(String exchangeId, List<String> symbols, Consumer<RawQuoteEvent> output) {
     this.exchangeId = exchangeId;
@@ -48,7 +50,8 @@ public class Exchange {
 
     List<Trade> trades = book.submit(incoming);
 
-    publishIfChanged(symbol); 
+    publishIfChanged(symbol);
+    notifyRestingOwners(trades, side);
 
     return new SubmitResult(orderId, trades);
   }
@@ -87,7 +90,8 @@ public class Exchange {
 
     List<Trade> trades = book.submit(replacement);
 
-    publishIfChanged(symbol); 
+    publishIfChanged(symbol);
+    notifyRestingOwners(trades, side);
 
     return Optional.of(new SubmitResult(newOrderId, trades));
   }
@@ -207,6 +211,10 @@ public class Exchange {
     }
   }
 
+  public void register(String agentId, Consumer<Trade> onFill) {
+    fillCallbacks.put(agentId, onFill);
+  }
+
   private OrderBook bookFor(String symbol) {
     OrderBook book = books.get(symbol);
 
@@ -215,5 +223,19 @@ public class Exchange {
     }
 
     return book;
+  }
+
+  private void notifyRestingOwners(List<Trade> trades, Side incomingSide) {
+    for (Trade trade : trades) {
+        String restingAgentId = incomingSide == Side.BUY
+                ? trade.sellAgentId()
+                : trade.buyAgentId();
+
+        Consumer<Trade> callback = fillCallbacks.get(restingAgentId);
+
+        if (callback != null) {
+            callback.accept(trade);
+        }
+    }
   }
 }
