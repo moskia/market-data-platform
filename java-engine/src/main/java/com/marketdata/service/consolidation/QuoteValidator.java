@@ -21,20 +21,24 @@ public class QuoteValidator {
       throw new IllegalArgumentException("Side must be BID or ASK");
     }
 
-    if (!Double.isFinite(quote.price()) || quote.price() <= 0) {
-      throw new IllegalArgumentException("Price must be finite and positive");
-    }
-
-    if (quote.quantity() <= 0) {
-      throw new IllegalArgumentException("Quantity must be positive");
-    }
-
     if (quote.sequenceNumber() <= 0) {
       throw new IllegalArgumentException("Sequence number must be positive");
     }
 
     if (quote.exchangeTimestamp() == null || quote.receivedTimestamp() == null) {
       throw new IllegalArgumentException("Timestamps are missing");
+    }
+
+    if (quote.price() == 0.0 && quote.quantity() == 0) {
+      return;
+    }
+
+    if (!Double.isFinite(quote.price()) || quote.price() <= 0) {
+      throw new IllegalArgumentException("Price must be finite and positive");
+    }
+
+    if (quote.quantity() <= 0) {
+      throw new IllegalArgumentException("Quantity must be positive");
     }
   }
 }

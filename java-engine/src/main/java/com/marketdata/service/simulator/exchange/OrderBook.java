@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.List;
+import java.util.Optional;
 
 import com.marketdata.service.simulator.exchange.Order;
 import com.marketdata.service.simulator.exchange.Side;
@@ -119,5 +120,9 @@ public class OrderBook {
     }
 
     return level.stream().mapToInt(Order::remaining).sum();
+  }
+
+  public Optional<Order> findOrder(long orderId) {
+    return Optional.ofNullable(ordersById.get(orderId));
   }
 }

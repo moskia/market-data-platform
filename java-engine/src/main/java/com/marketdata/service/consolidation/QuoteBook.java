@@ -60,6 +60,7 @@ public class QuoteBook {
         .filter(quote -> quote.symbol().equals(symbol))
         .filter(quote -> quote.side().equals("BID"))
         .filter(quote -> isFresh(quote, now))
+        .filter(quote -> quote.quantity() > 0)
         .max(
             Comparator.comparingDouble(RawQuoteEvent::price)
                 .thenComparing(RawQuoteEvent::exchangeId));
@@ -74,6 +75,7 @@ public class QuoteBook {
         .filter(quote -> quote.symbol().equals(symbol))
         .filter(quote -> quote.side().equals("ASK"))
         .filter(quote -> isFresh(quote, now))
+        .filter(quote -> quote.quantity() > 0)
         .min(
             Comparator.comparingDouble(RawQuoteEvent::price)
                 .thenComparing(RawQuoteEvent::exchangeId));
