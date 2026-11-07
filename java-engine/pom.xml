@@ -35,6 +35,13 @@
             <version>2.18.2</version>
         </dependency>
 
+        <!-- Latency percentiles (p50 / p99 / p99.9) -->
+        <dependency>
+            <groupId>org.hdrhistogram</groupId>
+            <artifactId>HdrHistogram</artifactId>
+            <version>2.2.2</version>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

@@ -6,11 +6,15 @@ import java.util.concurrent.TimeUnit;
 import com.marketdata.model.RawQuoteEvent;
 import com.marketdata.service.consolidation.ConsolidationService;
 import com.marketdata.model.ConsolidatedQuote;
+import com.marketdata.service.metrics.LatencyStats;
 
 public class ConsolidationWorker implements Runnable {
     private final ConflatingQueue conflatingQueue;
     private final ConsolidationService consolidationService;
     private volatile boolean running = true;
+
+    // Written only by this worker's thread; read by others only after the thread has finished.
+    private final LatencyStats latency = new LatencyStats();
 
     public ConsolidationWorker(ConflatingQueue conflatingQueue, ConsolidationService consolidationService) {
         this.conflatingQueue = conflatingQueue;
@@ -19,6 +23,11 @@ public class ConsolidationWorker implements Runnable {
 
     public void submit(RawQuoteEvent rawQuoteEvent) {
         this.conflatingQueue.offer(rawQuoteEvent);
+    }
+
+    /** Safe to read once this worker's thread has finished (after join()). */
+    public LatencyStats latency() {
+        return latency;
     }
 
     public void stop() {
@@ -84,8 +93,10 @@ public class ConsolidationWorker implements Runnable {
 
     private void processQuote(RawQuoteEvent rawQuoteEvent) {
         try {
+            Instant now = Instant.now();
             boolean updated =
-                    consolidationService.onQuote(rawQuoteEvent, Instant.now());
+                    consolidationService.onQuote(rawQuoteEvent, now);
+            latency.record(rawQuoteEvent, Instant.now());
 
             processedCount++;
 

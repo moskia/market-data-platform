@@ -9,6 +9,7 @@ import com.marketdata.service.concurrency.ConsolidationWorker;
 import com.marketdata.service.concurrency.SymbolRouter;
 import com.marketdata.service.consolidation.ConsolidationService;
 import com.marketdata.service.consolidation.QuoteBook;
+import com.marketdata.service.metrics.LatencyStats;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -128,6 +129,16 @@ public class ConsolidationEngine {
         // Step d: wait for every worker to drain
         for (Thread thread : workerThreads) {
           thread.join();
+        }
+
+        // Safe to read now: every worker thread has finished.
+        LatencyStats latency = new LatencyStats();
+        for (ConsolidationWorker worker : workers) {
+          latency.add(worker.latency());
+        }
+
+        if (latency.count() > 0) {
+          System.out.println(latency.summary());
         }
       }
     } // Step a: try-with-resources closes the publisher and the consumer here

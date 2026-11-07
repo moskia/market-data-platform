@@ -14,13 +14,18 @@ public final class KafkaConfig {
 
   private KafkaConfig() {}
 
-  /** Settings for sending JSON strings, waiting until every replica has stored them. */
+  /**
+   * Settings for sending JSON strings, waiting until every replica has stored them. Each message is
+   * sent right away instead of waiting up to 5 ms to be batched with others (Kafka 4's default):
+   * lower latency, at the cost of more requests under heavy load.
+   */
   public static Properties producerProperties(String bootstrapServers) {
     Properties properties = new Properties();
     properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     properties.put(ProducerConfig.ACKS_CONFIG, "all");
+    properties.put(ProducerConfig.LINGER_MS_CONFIG, 0);
     return properties;
   }
 

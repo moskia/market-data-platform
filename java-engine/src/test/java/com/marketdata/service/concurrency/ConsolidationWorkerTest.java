@@ -97,6 +97,22 @@ class ConsolidationWorkerTest {
     assertTrue(msftExpired, "MSFT's expired bid was never published while AAPL kept the worker busy");
   }
 
+  /** Every processed quote's latency is recorded; invalid ones are not. */
+  @Test
+  void latencyIsRecordedForEveryProcessedQuote() throws InterruptedException {
+    start(Duration.ofSeconds(5));
+
+    worker.submit(quote("EX_A", "AAPL", "BID", 100.05, 1));
+    worker.submit(quote("EX_B", "MSFT", "BID", -1.0, 1));
+    worker.submit(quote("EX_C", "GOOG", "BID", 100.05, 1));
+    assertTrue(waitUntil(() -> published.size() >= 2, 2_000));
+
+    worker.stop();
+    workerThread.join(2_000);
+
+    assertEquals(2, worker.latency().count());
+  }
+
   /** Quotes submitted before stop() must still be processed, and run() must then return. */
   @Test
   void stopDrainsWaitingQuotes() throws InterruptedException {
