@@ -1,0 +1,66 @@
+Benchmark                                                               Mode     Cnt     Score   Error   Units
+ConflatingQueueBenchmark.offerThenTake_conflating                      thrpt       5     8.418 ± 1.019  ops/us
+ConflatingQueueBenchmark.offerThenTake_plainQueue                      thrpt       5    22.748 ± 4.610  ops/us
+ConflatingQueueBenchmark.producerAndConsumer                           thrpt       5    14.787 ± 3.611  ops/us
+ConflatingQueueBenchmark.producerAndConsumer:consumer                  thrpt       5    12.886 ± 3.435  ops/us
+ConflatingQueueBenchmark.producerAndConsumer:delivered                 thrpt       5     1.205 ± 0.264  ops/us
+ConflatingQueueBenchmark.producerAndConsumer:offered                   thrpt       5     1.901 ± 0.608  ops/us
+ConflatingQueueBenchmark.producerAndConsumer:producer                  thrpt       5     1.901 ± 0.608  ops/us
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible           thrpt       5     0.861 ± 0.039  ops/us
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice             thrpt       5     0.825 ± 0.136  ops/us
+QuoteBookBenchmark.bestBid                                             thrpt       5     2.441 ± 0.155  ops/us
+QuoteBookBenchmark.update                                              thrpt       5    24.417 ± 5.459  ops/us
+ConflatingQueueBenchmark.offerThenTake_conflating                     sample  159124     0.204 ± 0.017   us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p0.00               sample             0.116           us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p0.50               sample             0.137           us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p0.90               sample             0.180           us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p0.95               sample             0.200           us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p0.99               sample             0.369           us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p0.999              sample            15.062           us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p0.9999             sample            91.589           us/op
+ConflatingQueueBenchmark.offerThenTake_conflating:p1.00               sample           348.160           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue                     sample  166771     0.119 ± 0.010   us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p0.00               sample             0.063           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p0.50               sample             0.085           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p0.90               sample             0.116           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p0.95               sample             0.126           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p0.99               sample             0.169           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p0.999              sample             2.268           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p0.9999             sample            63.359           us/op
+ConflatingQueueBenchmark.offerThenTake_plainQueue:p1.00               sample           181.248           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible          sample  110086     1.808 ± 0.142   us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p0.00    sample             1.032           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p0.50    sample             1.276           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p0.90    sample             1.866           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p0.95    sample             2.076           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p0.99    sample            11.584           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p0.999   sample            61.877           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p0.9999  sample           277.914           us/op
+ConsolidationServiceBenchmark.quoteThatChangesNothingVisible:p1.00    sample          2359.296           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice            sample  128278     1.587 ± 0.119   us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p0.00      sample             0.846           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p0.50      sample             1.026           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p0.90      sample             1.744           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p0.95      sample             1.914           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p0.99      sample             7.634           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p0.999     sample            65.884           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p0.9999    sample           326.751           us/op
+ConsolidationServiceBenchmark.quoteThatChangesTheBestPrice:p1.00      sample          2138.112           us/op
+QuoteBookBenchmark.bestBid                                            sample  191475     0.532 ± 0.060   us/op
+QuoteBookBenchmark.bestBid:p0.00                                      sample             0.348           us/op
+QuoteBookBenchmark.bestBid:p0.50                                      sample             0.371           us/op
+QuoteBookBenchmark.bestBid:p0.90                                      sample             0.604           us/op
+QuoteBookBenchmark.bestBid:p0.95                                      sample             0.668           us/op
+QuoteBookBenchmark.bestBid:p0.99                                      sample             1.314           us/op
+QuoteBookBenchmark.bestBid:p0.999                                     sample            21.394           us/op
+QuoteBookBenchmark.bestBid:p0.9999                                    sample           101.296           us/op
+QuoteBookBenchmark.bestBid:p1.00                                      sample          1972.224           us/op
+QuoteBookBenchmark.update                                             sample  121800     0.117 ± 0.015   us/op
+QuoteBookBenchmark.update:p0.00                                       sample             0.063           us/op
+QuoteBookBenchmark.update:p0.50                                       sample             0.074           us/op
+QuoteBookBenchmark.update:p0.90                                       sample             0.105           us/op
+QuoteBookBenchmark.update:p0.95                                       sample             0.106           us/op
+QuoteBookBenchmark.update:p0.99                                       sample             0.158           us/op
+QuoteBookBenchmark.update:p0.999                                      sample             9.360           us/op
+QuoteBookBenchmark.update:p0.9999                                     sample            60.975           us/op
+QuoteBookBenchmark.update:p1.00                                       sample           253.184           us/op
