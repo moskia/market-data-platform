@@ -30,6 +30,7 @@ class SingleExchangeSimulationTest {
     Exchange exchange =
         new Exchange(
             "EX_A",
+            1,
             List.of("AAPL"),
             event -> {
               published.add(event);

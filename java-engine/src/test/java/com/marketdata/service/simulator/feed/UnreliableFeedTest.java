@@ -31,7 +31,7 @@ class UnreliableFeedTest {
 
   private void sendAll() {
     for (int i = 1; i <= MESSAGES; i++) {
-      RawQuoteEvent quote = new RawQuoteEvent("EX_A", "AAPL", "BID", 100.0, 50, i, SENT_AT, SENT_AT);
+      RawQuoteEvent quote = new RawQuoteEvent("EX_A", "AAPL", "BID", 100.0, 50, 1, i, SENT_AT, SENT_AT);
       scheduler.schedule(i - 1, () -> feed.accept(quote));
     }
 
@@ -79,7 +79,7 @@ class UnreliableFeedTest {
 
   @Test
   void receivedTimeIsSetOnArrivalAndNothingElseChanges() {
-    feed.accept(new RawQuoteEvent("EX_B", "MSFT", "ASK", 420.05, 75, 7, SENT_AT, SENT_AT));
+    feed.accept(new RawQuoteEvent("EX_B", "MSFT", "ASK", 420.05, 75, 1, 7, SENT_AT, SENT_AT));
     scheduler.runUntil(1_000);
 
     RawQuoteEvent quote = received.get(0);

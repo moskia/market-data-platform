@@ -146,6 +146,6 @@ class ConsolidationWorkerTest {
   private static RawQuoteEvent quote(
       String exchange, String symbol, String side, double price, long sequence) {
     Instant now = Instant.now();
-    return new RawQuoteEvent(exchange, symbol, side, price, 50, sequence, now, now);
+    return new RawQuoteEvent(exchange, symbol, side, price, 50, 1, sequence, now, now);
   }
 }

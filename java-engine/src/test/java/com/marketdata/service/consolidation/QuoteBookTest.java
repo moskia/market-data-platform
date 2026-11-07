@@ -85,13 +85,38 @@ class QuoteBookTest {
     assertEquals(99.95, book.bestBid("AAPL").orElseThrow().price());
   }
 
+  /** The exchange restarted: its new session counts from 1 again, and that must be accepted. */
+  @Test
+  void newSessionIsAcceptedEvenThoughItsSequenceStartsAgain() {
+    QuoteBook book = new QuoteBook();
+    book.update(inSession(1, "BID", 100.00, 3_000));
+
+    assertTrue(book.update(inSession(2, "BID", 101.00, 1)));
+    assertEquals(101.00, book.bestBid("AAPL").orElseThrow().price());
+  }
+
+  /** A message from before the restart, arriving late, must not undo the new session's price. */
+  @Test
+  void lateMessageFromAnEarlierSessionIsRejected() {
+    QuoteBook book = new QuoteBook();
+    book.update(inSession(2, "BID", 101.00, 1));
+
+    assertFalse(book.update(inSession(1, "BID", 100.00, 3_000)));
+    assertEquals(101.00, book.bestBid("AAPL").orElseThrow().price());
+  }
+
+  private static RawQuoteEvent inSession(long session, String side, double price, long sequence) {
+    Instant now = Instant.now();
+    return new RawQuoteEvent("EX_A", "AAPL", side, price, 50, session, sequence, now, now);
+  }
+
   private static RawQuoteEvent empty(String exchange, String side, long sequence) {
     Instant now = Instant.now();
-    return new RawQuoteEvent(exchange, "AAPL", side, 0.0, 0, sequence, now, now);
+    return new RawQuoteEvent(exchange, "AAPL", side, 0.0, 0, 1, sequence, now, now);
   }
 
   private static RawQuoteEvent quote(String exchange, String side, double price, long sequence) {
     Instant now = Instant.now();
-    return new RawQuoteEvent(exchange, "AAPL", side, price, 50, sequence, now, now);
+    return new RawQuoteEvent(exchange, "AAPL", side, price, 50, 1, sequence, now, now);
   }
 }

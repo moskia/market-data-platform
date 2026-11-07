@@ -92,7 +92,7 @@ class AgentTurnsTest {
   /** Prices, quantities and sequence numbers of every message; timestamps use the real clock. */
   private static List<String> runMarket(long seed) {
     List<RawQuoteEvent> events = new ArrayList<>();
-    Exchange exchange = new Exchange("EX_A", List.of("AAPL"), events::add);
+    Exchange exchange = new Exchange("EX_A", 1, List.of("AAPL"), events::add);
     Random random = new Random(seed);
     EventScheduler scheduler = new EventScheduler();
 

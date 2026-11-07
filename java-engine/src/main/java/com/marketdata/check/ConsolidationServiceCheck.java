@@ -49,7 +49,7 @@ public class ConsolidationServiceCheck {
 
   private static RawQuoteEvent quote(
       String exchange, String side, double price, long sequence, Instant received) {
-    return new RawQuoteEvent(exchange, "AAPL", side, price, 50, sequence, received, received);
+    return new RawQuoteEvent(exchange, "AAPL", side, price, 50, 1, sequence, received, received);
   }
 
   private static void check(boolean condition, String description) {

@@ -10,7 +10,7 @@ public class KafkaSmokeTest {
   public static void main(String[] args) {
     try (KafkaQuotePublisher publisher = new KafkaQuotePublisher(KafkaConfig.BOOTSTRAP_SERVERS)) {
       Instant now = Instant.now();
-      publisher.publish(new RawQuoteEvent("EX_A", "AAPL", "BID", 190.00, 100, 1, now, now));
+      publisher.publish(new RawQuoteEvent("EX_A", "AAPL", "BID", 190.00, 100, 1, 1, now, now));
     }
   }
 }

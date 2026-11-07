@@ -61,6 +61,7 @@ public class UnreliableFeed implements Consumer<RawQuoteEvent> {
         quote.side(),
         quote.price(),
         quote.quantity(),
+        quote.sessionId(),
         quote.sequenceNumber(),
         quote.exchangeTimestamp(),
         Instant.now());

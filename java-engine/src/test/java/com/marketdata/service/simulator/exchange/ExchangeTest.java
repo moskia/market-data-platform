@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 class ExchangeTest {
 
   private final List<RawQuoteEvent> published = new ArrayList<>();
-  private final Exchange exchange = new Exchange("EX_A", List.of("AAPL", "MSFT"), published::add);
+  private final Exchange exchange = new Exchange("EX_A", 1, List.of("AAPL", "MSFT"), published::add);
 
   @Test
   void firstOrderPublishesItsSide() {
@@ -217,6 +217,15 @@ class ExchangeTest {
           "Sequence went backwards at event " + i);
     }
     assertTrue(published.get(0).sequenceNumber() > 0);
+  }
+
+  @Test
+  void everyMessageCarriesTheExchangesSession() {
+    Exchange restarted = new Exchange("EX_A", 7, List.of("AAPL"), published::add);
+    restarted.submit("AAPL", "mm", Side.BUY, 10000, 50);
+    restarted.submit("AAPL", "mm", Side.SELL, 10010, 50);
+
+    assertTrue(published.stream().allMatch(e -> e.sessionId() == 7));
   }
 
   @Test

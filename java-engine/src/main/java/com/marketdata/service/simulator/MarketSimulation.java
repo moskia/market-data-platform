@@ -24,13 +24,16 @@ public class MarketSimulation {
 
   public record Listing(String symbol, long startTicks) {}
 
-  public record Settings(List<Listing> listings, long seed, boolean withArbitrageur) {
+  /** {@code sessionId} is stamped on every message; use a new, larger one for every run. */
+  public record Settings(
+      List<Listing> listings, long seed, long sessionId, boolean withArbitrageur) {
 
     /** What the simulator program runs. */
-    public static Settings standard(long seed) {
+    public static Settings standard(long seed, long sessionId) {
       return new Settings(
           List.of(new Listing("AAPL", 19000), new Listing("MSFT", 42000), new Listing("GOOG", 17000)),
           seed,
+          sessionId,
           true);
     }
   }
@@ -66,7 +69,7 @@ public class MarketSimulation {
               ? scheduler.delayed(ARBITRAGEUR_FEED_DELAYS_MS[i], arbitrageur::onQuote).andThen(feed)
               : feed;
 
-      Exchange exchange = new Exchange(EXCHANGE_IDS.get(i), symbols, exchangeOutput);
+      Exchange exchange = new Exchange(EXCHANGE_IDS.get(i), settings.sessionId(), symbols, exchangeOutput);
       exchanges.add(exchange);
       arbitrageur.connect(exchange);
     }

@@ -33,7 +33,7 @@ public class QuoteBook {
 
     RawQuoteEvent previous = latestQuotes.get(key);
 
-    if (previous != null && quote.sequenceNumber() <= previous.sequenceNumber()) {
+    if (previous != null && !quote.isNewerThan(previous)) {
       return false;
     }
 

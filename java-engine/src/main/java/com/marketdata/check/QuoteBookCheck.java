@@ -53,7 +53,7 @@ public class QuoteBookCheck {
 
     Instant received = Instant.parse("2026-01-01T00:00:00Z");
 
-    expiryBook.update(new RawQuoteEvent("EX_A", "AAPL", "BID", 100.05, 50, 1, received, received));
+    expiryBook.update(new RawQuoteEvent("EX_A", "AAPL", "BID", 100.05, 50, 1, 1, received, received));
 
     check(
         expiryBook.bestBid("AAPL", received.plusSeconds(4)).isPresent(),
@@ -69,7 +69,7 @@ public class QuoteBookCheck {
   private static RawQuoteEvent quote(String exchange, String side, double price, long sequence) {
     Instant now = Instant.now();
 
-    return new RawQuoteEvent(exchange, "AAPL", side, price, 50, sequence, now, now);
+    return new RawQuoteEvent(exchange, "AAPL", side, price, 50, 1, sequence, now, now);
   }
 
   private static ConsolidatedQuote consolidated(Instant timestamp, int bidQuantity) {

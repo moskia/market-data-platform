@@ -55,6 +55,18 @@ class ConcurrentConflatingQueueTest {
   }
 
   @Test
+  void quoteFromANewSessionReplacesAWaitingOneFromTheOldSession() throws InterruptedException {
+    ConflatingQueue queue = new ConcurrentConflatingQueue();
+    Instant now = Instant.now();
+    queue.offer(new RawQuoteEvent("EX_A", "AAPL", "BID", 100.0, 50, 1, 3_000, now, now));
+    queue.offer(new RawQuoteEvent("EX_A", "AAPL", "BID", 101.0, 50, 2, 1, now, now));
+
+    RawQuoteEvent delivered = queue.take();
+    assertEquals(2, delivered.sessionId());
+    assertEquals(101.0, delivered.price());
+  }
+
+  @Test
   void pollReturnsNullWhenNothingArrives() throws InterruptedException {
     ConflatingQueue queue = new ConcurrentConflatingQueue();
 
@@ -118,6 +130,6 @@ class ConcurrentConflatingQueueTest {
 
   private static RawQuoteEvent quote(String exchange, String symbol, String side, long sequence) {
     Instant now = Instant.now();
-    return new RawQuoteEvent(exchange, symbol, side, 100.0, 50, sequence, now, now);
+    return new RawQuoteEvent(exchange, symbol, side, 100.0, 50, 1, sequence, now, now);
   }
 }

@@ -56,10 +56,11 @@ public class ConsolidationService {
     RawQuoteEvent bid = book.bestBid(symbol, now).orElse(null);
     RawQuoteEvent ask = book.bestAsk(symbol, now).orElse(null);
 
-    Double spread = null;
+    Double spreadBps = null;
 
     if (bid != null && ask != null) {
-      spread = ask.price() - bid.price();
+      double mid = (bid.price() + ask.price()) / 2;
+      spreadBps = (ask.price() - bid.price()) / mid * 10_000;
     }
 
     return new ConsolidatedQuote(
@@ -70,7 +71,7 @@ public class ConsolidationService {
         ask == null ? null : ask.price(),
         ask == null ? null : ask.quantity(),
         ask == null ? null : ask.exchangeId(),
-        spread,
+        spreadBps,
         now);
   }
 

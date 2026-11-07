@@ -21,6 +21,10 @@ public class QuoteValidator {
       throw new IllegalArgumentException("Side must be BID or ASK");
     }
 
+    if (quote.sessionId() <= 0) {
+      throw new IllegalArgumentException("Session id must be positive");
+    }
+
     if (quote.sequenceNumber() <= 0) {
       throw new IllegalArgumentException("Sequence number must be positive");
     }

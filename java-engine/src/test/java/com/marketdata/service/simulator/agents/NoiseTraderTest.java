@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class NoiseTraderTest {
 
   private final List<RawQuoteEvent> published = new ArrayList<>();
-  private final Exchange exchange = new Exchange("EX_A", List.of("AAPL"), published::add);
+  private final Exchange exchange = new Exchange("EX_A", 1, List.of("AAPL"), published::add);
 
   @Test
   void doesNothingOnAnEmptyBook() {
@@ -95,7 +95,7 @@ class NoiseTraderTest {
 
   private List<String> runWithSeed(long seed) {
     List<RawQuoteEvent> events = new ArrayList<>();
-    Exchange seeded = new Exchange("EX_A", List.of("AAPL"), events::add);
+    Exchange seeded = new Exchange("EX_A", 1, List.of("AAPL"), events::add);
     seeded.submit("AAPL", "big", Side.BUY, 9995, 500);
     seeded.submit("AAPL", "big", Side.SELL, 10005, 500);
 

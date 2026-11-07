@@ -18,6 +18,8 @@ public class MarketDataSimulatorMain {
   public static void main(String[] args) throws InterruptedException {
     long runSeconds = args.length > 0 ? Long.parseLong(args[0]) : DEFAULT_RUN_SECONDS;
     long seed = args.length > 1 ? Long.parseLong(args[1]) : System.nanoTime();
+    // A new session for every run, so the engine knows sequence numbers start again from 1.
+    long sessionId = System.currentTimeMillis();
 
     // Ctrl+C interrupts the main thread: the scheduler stops waiting and the run ends early.
     Thread mainThread = Thread.currentThread();
@@ -41,13 +43,14 @@ public class MarketDataSimulatorMain {
       MarketSimulation market =
           new MarketSimulation(
               scheduler,
-              MarketSimulation.Settings.standard(seed),
+              MarketSimulation.Settings.standard(seed, sessionId),
               quote -> {
                 publisher.publish(quote);
                 published[0]++;
               });
 
-      System.out.printf("Simulating the market for %d s (seed %d)...%n", runSeconds, seed);
+      System.out.printf(
+          "Simulating the market for %d s (seed %d, session %d)...%n", runSeconds, seed, sessionId);
       scheduler.runUntil(runSeconds * 1_000);
 
       // Clear the interrupt from Ctrl+C, or the Kafka producer can't finish sending on close().

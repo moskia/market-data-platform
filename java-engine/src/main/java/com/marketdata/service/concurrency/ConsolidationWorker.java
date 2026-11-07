@@ -119,7 +119,7 @@ public class ConsolidationWorker implements Runnable {
                 System.out.printf(
                     "%s | BID %.2f (%s, qty=%d) "
                         + "| ASK %.2f (%s, qty=%d) "
-                        + "| spread=%.2f%n",
+                        + "| spread=%.2f bps%n",
                     symbol,
                     quote.bidPrice(),
                     quote.bidExchangeId(),
@@ -127,7 +127,7 @@ public class ConsolidationWorker implements Runnable {
                     quote.askPrice(),
                     quote.askExchangeId(),
                     quote.askQuantity(),
-                    quote.spread()
+                    quote.spreadBps()
                 );
             } else {
                 System.out.printf(

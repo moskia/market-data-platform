@@ -46,7 +46,7 @@ public class ConcurrentConflatingQueue implements ConflatingQueue {
                 return value;
             }
 
-            if (value.sequenceNumber() > oldQuote.sequenceNumber()) {
+            if (value.isNewerThan(oldQuote)) {
                 return value;
             }
 

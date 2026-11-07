@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 class MarketMakerTest {
 
   private final List<RawQuoteEvent> published = new ArrayList<>();
-  private final Exchange exchange = new Exchange("EX_A", List.of("AAPL"), published::add);
+  private final Exchange exchange = new Exchange("EX_A", 1, List.of("AAPL"), published::add);
 
   // The fair price the market maker sees; each test sets it directly.
   private long fair = 10000;

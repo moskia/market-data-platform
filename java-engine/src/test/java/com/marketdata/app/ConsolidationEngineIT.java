@@ -172,6 +172,22 @@ class ConsolidationEngineIT {
         "A negative price reached the consolidated book");
   }
 
+  /**
+   * The problem we hit in the demo: the exchange restarts and counts from 1 again. The new
+   * session's price must replace the old one, not be ignored as stale.
+   */
+  @Test
+  void restartedExchangeIsNotIgnoredAsStale() throws Exception {
+    Instant now = Instant.now();
+    try (KafkaQuotePublisher exchanges =
+        new KafkaQuotePublisher(KAFKA.getBootstrapServers(), rawTopic)) {
+      exchanges.publish(new RawQuoteEvent("EX_A", "AAPL", "BID", 100.00, 50, 1, 3_000, now, now));
+      exchanges.publish(new RawQuoteEvent("EX_A", "AAPL", "BID", 101.00, 50, 2, 1, now, now));
+    }
+
+    awaitPublished(q -> q.symbol().equals("AAPL") && Double.valueOf(101.00).equals(q.bidPrice()));
+  }
+
   /** shutdown() must make run() return, with every worker thread stopped and no exception. */
   @Test
   void shutdownStopsTheEngineAndAllWorkers() throws Exception {
@@ -220,6 +236,6 @@ class ConsolidationEngineIT {
   private static RawQuoteEvent quote(
       String exchange, String symbol, String side, double price, long sequence) {
     Instant now = Instant.now();
-    return new RawQuoteEvent(exchange, symbol, side, price, 50, sequence, now, now);
+    return new RawQuoteEvent(exchange, symbol, side, price, 50, 1, sequence, now, now);
   }
 }

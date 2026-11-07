@@ -32,6 +32,7 @@ class ArbitrageurTest {
     Exchange exchange =
         new Exchange(
             id,
+            1,
             List.of("AAPL"),
             scheduler.delayed(2, arbitrageur::onQuote).andThen(sink::add));
     arbitrageur.connect(exchange);
@@ -144,7 +145,7 @@ class ArbitrageurTest {
   private static RawQuoteEvent quote(
       String exchange, String side, double price, int quantity, long sequence) {
     Instant now = Instant.now();
-    return new RawQuoteEvent(exchange, "AAPL", side, price, quantity, sequence, now, now);
+    return new RawQuoteEvent(exchange, "AAPL", side, price, quantity, 1, sequence, now, now);
   }
 
   private static RawQuoteEvent last(List<RawQuoteEvent> events) {

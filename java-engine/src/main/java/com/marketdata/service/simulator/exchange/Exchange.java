@@ -15,6 +15,7 @@ public class Exchange {
   //         nextOrderId and sequenceNumber counters,
   //         what was last published per symbol+side (e.g. a small private record Top(long priceTicks, int quantity))
   private final String exchangeId;
+  private final long sessionId;
   private final Consumer<RawQuoteEvent> output;
 
   private final Map<String, OrderBook> books = new HashMap<>();
@@ -32,8 +33,10 @@ public class Exchange {
 
   private final Map<String, Consumer<Trade>> fillCallbacks = new HashMap<>();
 
-  public Exchange(String exchangeId, List<String> symbols, Consumer<RawQuoteEvent> output) {
+  public Exchange(
+      String exchangeId, long sessionId, List<String> symbols, Consumer<RawQuoteEvent> output) {
     this.exchangeId = exchangeId;
+    this.sessionId = sessionId;
     this.output = output;
 
     for (String symbol : symbols) {
@@ -208,6 +211,8 @@ public class Exchange {
                     currentTop.priceTicks() / 100.0,
 
                     currentTop.quantity(),
+
+                    sessionId,
 
                     // Increment the exchange-wide sequence number.
                     // It must increase across ALL symbols and sides,

@@ -20,7 +20,7 @@ class MarketSimulationTest {
   private static List<RawQuoteEvent> runOneMinute(long seed) {
     List<RawQuoteEvent> received = new ArrayList<>();
     EventScheduler scheduler = new EventScheduler();
-    new MarketSimulation(scheduler, MarketSimulation.Settings.standard(seed), received::add);
+    new MarketSimulation(scheduler, MarketSimulation.Settings.standard(seed, 1), received::add);
 
     scheduler.runUntil(60_000);
 
@@ -75,12 +75,23 @@ class MarketSimulationTest {
   void theFeedLosesAndDelaysSomeMessages() {
     EventScheduler scheduler = new EventScheduler();
     MarketSimulation market =
-        new MarketSimulation(scheduler, MarketSimulation.Settings.standard(1), quote -> {});
+        new MarketSimulation(scheduler, MarketSimulation.Settings.standard(1, 1), quote -> {});
 
     scheduler.runUntil(60_000);
 
     assertTrue(market.dropped() > 0, "Nothing was dropped");
     assertTrue(market.late() > 0, "Nothing was late");
+  }
+
+  @Test
+  void everyMessageCarriesTheRunsSession() {
+    List<RawQuoteEvent> received = new ArrayList<>();
+    EventScheduler scheduler = new EventScheduler();
+    new MarketSimulation(scheduler, MarketSimulation.Settings.standard(1, 99), received::add);
+
+    scheduler.runUntil(10_000);
+
+    assertTrue(!received.isEmpty() && received.stream().allMatch(q -> q.sessionId() == 99));
   }
 
   /** Everything except the timestamps, which come from the real clock. */

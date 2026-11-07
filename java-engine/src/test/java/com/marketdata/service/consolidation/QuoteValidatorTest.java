@@ -38,8 +38,17 @@ class QuoteValidatorTest {
         IllegalArgumentException.class, () -> QuoteValidator.validate(quote(Double.NaN, 50)));
   }
 
+  /** Messages written before session ids existed have 0 here, and are rejected cleanly. */
+  @Test
+  void missingSessionIdIsRejected() {
+    Instant now = Instant.now();
+    RawQuoteEvent noSession = new RawQuoteEvent("EX_A", "AAPL", "BID", 100.05, 50, 0, 1, now, now);
+
+    assertThrows(IllegalArgumentException.class, () -> QuoteValidator.validate(noSession));
+  }
+
   private static RawQuoteEvent quote(double price, int quantity) {
     Instant now = Instant.now();
-    return new RawQuoteEvent("EX_A", "AAPL", "BID", price, quantity, 1, now, now);
+    return new RawQuoteEvent("EX_A", "AAPL", "BID", price, quantity, 1, 1, now, now);
   }
 }

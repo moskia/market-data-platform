@@ -71,7 +71,7 @@ class ThreeExchangeSimulationTest {
 
   private static Result run(long seed, boolean withArbitrageur) {
     EventScheduler scheduler = new EventScheduler();
-    Settings settings = new Settings(List.of(new Listing("AAPL", 10000)), seed, withArbitrageur);
+    Settings settings = new Settings(List.of(new Listing("AAPL", 10000)), seed, 1, withArbitrageur);
     List<Exchange> exchanges = new MarketSimulation(scheduler, settings, quote -> {}).exchanges();
 
     long[] crossedMs = {0};

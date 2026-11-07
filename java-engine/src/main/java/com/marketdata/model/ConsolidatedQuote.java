@@ -11,7 +11,7 @@ public record ConsolidatedQuote(
     Double askPrice,
     Integer askQuantity,
     String askExchangeId,
-    Double spread,
+    Double spreadBps,
     Instant calculatedTimestamp) {
   public boolean sameMarketState(ConsolidatedQuote other) {
     return other != null
