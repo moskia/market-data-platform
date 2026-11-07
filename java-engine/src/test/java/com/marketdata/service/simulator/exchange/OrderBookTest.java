@@ -191,6 +191,32 @@ class OrderBookTest {
   }
 
   @Test
+  void immediateOrCancelTradesWhatItCanAndDropsTheRest() {
+    book.submit(sell(10005, 10));
+    book.submit(sell(10010, 50));
+
+    Order incoming = immediateOrCancelBuy(10005, 40);
+    List<Trade> trades = book.submit(incoming);
+
+    assertEquals(1, trades.size());
+    assertEquals(10, trades.get(0).quantity());
+    assertTrue(book.bestBid().isEmpty(), "The 30 left over must not wait in the book");
+    assertFalse(book.cancel(incoming.id()), "Nothing of it is left to cancel");
+    assertEquals(OptionalLong.of(10010), book.bestAsk());
+  }
+
+  @Test
+  void immediateOrCancelWithNothingToTradeLeavesTheBookUnchanged() {
+    book.submit(sell(10010, 50));
+
+    List<Trade> trades = book.submit(immediateOrCancelBuy(10005, 40));
+
+    assertTrue(trades.isEmpty());
+    assertTrue(book.bestBid().isEmpty());
+    assertEquals(50, book.quantityAt(Side.SELL, 10010));
+  }
+
+  @Test
   void ordersRejectNonPositivePriceOrQuantity() {
     assertThrows(IllegalArgumentException.class, () -> new Order(1, "t", Side.BUY, 0, 10));
     assertThrows(IllegalArgumentException.class, () -> new Order(1, "t", Side.BUY, 10000, 0));
@@ -198,6 +224,11 @@ class OrderBookTest {
 
   private Order buy(long priceTicks, int quantity) {
     return new Order(nextId++, "agent-" + nextId, Side.BUY, priceTicks, quantity);
+  }
+
+  private Order immediateOrCancelBuy(long priceTicks, int quantity) {
+    return new Order(
+        nextId++, "agent-" + nextId, Side.BUY, priceTicks, quantity, TimeInForce.IMMEDIATE_OR_CANCEL);
   }
 
   private Order sell(long priceTicks, int quantity) {

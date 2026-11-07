@@ -2,6 +2,7 @@ package com.marketdata.service.simulator.scheduler;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.function.Consumer;
 
 /**
  * A to-do list sorted by simulated time, run on one thread. Events due at the same time run in the
@@ -39,6 +40,11 @@ public class EventScheduler {
     }
 
     events.add(new ScheduledEvent(nowMs + delayMs, nextArrivalNumber++, action));
+  }
+
+  /** Wraps a receiver so that everything sent to it arrives delayMs later, like over a network. */
+  public <T> Consumer<T> delayed(long delayMs, Consumer<T> receiver) {
+    return message -> schedule(delayMs, () -> receiver.accept(message));
   }
 
   /** Runs every event due at or before endMs. Later events stay on the list for the next run. */

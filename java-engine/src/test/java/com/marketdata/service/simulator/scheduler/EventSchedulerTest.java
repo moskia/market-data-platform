@@ -132,6 +132,20 @@ class EventSchedulerTest {
   }
 
   @Test
+  void delayedReceiverGetsMessagesLaterAndInOrder() {
+    List<String> received = new ArrayList<>();
+    var delayed = scheduler.delayed(5, (String message) -> received.add(scheduler.now() + " " + message));
+
+    scheduler.schedule(10, () -> delayed.accept("first"));
+    scheduler.schedule(10, () -> delayed.accept("second"));
+    scheduler.runUntil(14);
+    assertTrue(received.isEmpty(), "Arrived too early");
+
+    scheduler.runUntil(15);
+    assertEquals(List.of("15 first", "15 second"), received);
+  }
+
+  @Test
   void negativeDelayIsRejected() {
     assertThrows(IllegalArgumentException.class, () -> scheduler.schedule(-1, () -> {}));
   }

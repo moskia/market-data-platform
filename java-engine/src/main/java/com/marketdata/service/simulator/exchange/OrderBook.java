@@ -23,6 +23,24 @@ public class OrderBook {
 
 
   public List<Trade> submit(Order incoming) {
+    List<Trade> trades = match(incoming);
+
+    if (!incoming.isFilled() && incoming.timeInForce() == TimeInForce.GOOD_TILL_CANCEL) {
+      rest(incoming);
+    }
+
+    return trades;
+  }
+
+  private void rest(Order order) {
+    TreeMap<Long, Deque<Order>> ownSide = order.side() == Side.BUY ? bids : asks;
+
+    ownSide.computeIfAbsent(order.priceTicks(), price -> new ArrayDeque<>()).addLast(order);
+
+    ordersById.put(order.id(), order);
+  }
+
+  private List<Trade> match(Order incoming) {
     List<Trade> trades = new ArrayList<>();
 
     TreeMap<Long, Deque<Order>> opposite = incoming.side() == Side.BUY ? asks : bids;
@@ -66,14 +84,6 @@ public class OrderBook {
           opposite.remove(bestPrice);
         }
       }
-    }
-
-    if (!incoming.isFilled()) {
-      TreeMap<Long, Deque<Order>> ownSide = incoming.side() == Side.BUY ? bids : asks;
-
-      ownSide.computeIfAbsent(incoming.priceTicks(), price -> new ArrayDeque<>()).addLast(incoming);
-
-      ordersById.put(incoming.id(), incoming);
     }
 
     return trades;

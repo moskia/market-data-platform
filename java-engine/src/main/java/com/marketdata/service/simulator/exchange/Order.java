@@ -9,9 +9,15 @@ public final class Order {
   private final String agentId;
   private final Side side;
   private final long priceTicks;
+  private final TimeInForce timeInForce;
   private int remaining;
 
   public Order(long id, String agentId, Side side, long priceTicks, int quantity) {
+    this(id, agentId, side, priceTicks, quantity, TimeInForce.GOOD_TILL_CANCEL);
+  }
+
+  public Order(
+      long id, String agentId, Side side, long priceTicks, int quantity, TimeInForce timeInForce) {
     if (priceTicks <= 0) {
       throw new IllegalArgumentException("priceTicks must be positive");
     }
@@ -24,6 +30,7 @@ public final class Order {
     this.agentId = agentId;
     this.side = side;
     this.priceTicks = priceTicks;
+    this.timeInForce = timeInForce;
     this.remaining = quantity;
   }
 
@@ -41,6 +48,10 @@ public final class Order {
 
   public long priceTicks() {
     return priceTicks;
+  }
+
+  public TimeInForce timeInForce() {
+    return timeInForce;
   }
 
   public int remaining() {

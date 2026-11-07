@@ -315,6 +315,37 @@ class ExchangeTest {
     assertEquals(2, published.size(), "The first ask, then the reduced ask");
   }
 
+  /** Only the reduced ask is published: the leftover never shows up as a bid. */
+  @Test
+  void immediateOrCancelPublishesOnceAndNeverShowsTheLeftover() {
+    List<Trade> sellerFills = new ArrayList<>();
+    exchange.register("seller", sellerFills::add);
+    exchange.submit("AAPL", "seller", Side.SELL, 10000, 10);
+    int before = published.size();
+
+    SubmitResult result =
+        exchange.submitImmediateOrCancel("AAPL", "arb", Side.BUY, 10000, 50);
+
+    assertEquals(10, result.trades().get(0).quantity());
+    assertEquals(before + 1, published.size(), "One update: the ask side emptied");
+    assertQuote(last(), "ASK", 0.0, 0);
+    assertTrue(published.stream().noneMatch(e -> e.side().equals("BID")), "Leftover was shown");
+    assertTrue(exchange.bestBid("AAPL").isEmpty());
+    assertEquals(1, sellerFills.size(), "The waiting seller is still told");
+  }
+
+  @Test
+  void immediateOrCancelWithNothingToTradePublishesNothing() {
+    exchange.submit("AAPL", "seller", Side.SELL, 10010, 10);
+    int before = published.size();
+
+    SubmitResult result =
+        exchange.submitImmediateOrCancel("AAPL", "arb", Side.BUY, 10000, 50);
+
+    assertTrue(result.trades().isEmpty());
+    assertEquals(before, published.size());
+  }
+
   private RawQuoteEvent last() {
     return published.get(published.size() - 1);
   }

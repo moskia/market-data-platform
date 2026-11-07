@@ -42,11 +42,27 @@ public class Exchange {
   }
 
   public SubmitResult submit(String symbol, String agentId, Side side, long priceTicks, int quantity) {
+    return place(symbol, agentId, side, priceTicks, quantity, TimeInForce.GOOD_TILL_CANCEL);
+  }
+
+  /** Trades what it can right now and drops the rest, so nothing waits on old information. */
+  public SubmitResult submitImmediateOrCancel(
+      String symbol, String agentId, Side side, long priceTicks, int quantity) {
+    return place(symbol, agentId, side, priceTicks, quantity, TimeInForce.IMMEDIATE_OR_CANCEL);
+  }
+
+  private SubmitResult place(
+      String symbol,
+      String agentId,
+      Side side,
+      long priceTicks,
+      int quantity,
+      TimeInForce timeInForce) {
     OrderBook book = bookFor(symbol);
 
     long orderId = nextOrderId++;
 
-    Order incoming = new Order(orderId, agentId, side, priceTicks, quantity);
+    Order incoming = new Order(orderId, agentId, side, priceTicks, quantity, timeInForce);
 
     List<Trade> trades = book.submit(incoming);
 
@@ -94,6 +110,10 @@ public class Exchange {
     notifyRestingOwners(trades, side);
 
     return Optional.of(new SubmitResult(newOrderId, trades));
+  }
+
+  public String exchangeId() {
+    return exchangeId;
   }
 
   public OptionalLong bestBid(String symbol) {
