@@ -2,44 +2,64 @@ package com.marketdata.app;
 
 import com.marketdata.kafka.KafkaConfig;
 import com.marketdata.kafka.simulator.KafkaQuotePublisher;
-import com.marketdata.service.simulator.SimulatedExchangeFeedHandler;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import com.marketdata.service.simulator.MarketSimulation;
+import com.marketdata.service.simulator.scheduler.EventScheduler;
+import com.marketdata.service.simulator.scheduler.RealTimePacer;
 
+/**
+ * Runs the simulated market in real time and publishes every price message to Kafka.
+ *
+ * <p>Arguments (both optional): how many seconds to run (default 10), and the seed (default:
+ * random, printed so a run can be repeated).
+ */
 public class MarketDataSimulatorMain {
+  private static final long DEFAULT_RUN_SECONDS = 10;
+
   public static void main(String[] args) throws InterruptedException {
+    long runSeconds = args.length > 0 ? Long.parseLong(args[0]) : DEFAULT_RUN_SECONDS;
+    long seed = args.length > 1 ? Long.parseLong(args[1]) : System.nanoTime();
+
+    // Ctrl+C interrupts the main thread: the scheduler stops waiting and the run ends early.
+    Thread mainThread = Thread.currentThread();
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  mainThread.interrupt();
+
+                  try {
+                    mainThread.join();
+                  } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                  }
+                },
+                "simulator-shutdown"));
+
     try (KafkaQuotePublisher publisher = new KafkaQuotePublisher(KafkaConfig.BOOTSTRAP_SERVERS)) {
-      List<String> symbols = List.of("AAPL", "MSFT", "GOOG");
+      long[] published = {0};
+      EventScheduler scheduler = new EventScheduler(new RealTimePacer());
+      MarketSimulation market =
+          new MarketSimulation(
+              scheduler,
+              MarketSimulation.Settings.standard(seed),
+              quote -> {
+                publisher.publish(quote);
+                published[0]++;
+              });
 
-      List<SimulatedExchangeFeedHandler> exchanges =
-          List.of(
-              new SimulatedExchangeFeedHandler("EX_A", symbols, 300, publisher::publish),
-              new SimulatedExchangeFeedHandler("EX_B", symbols, 500, publisher::publish),
-              new SimulatedExchangeFeedHandler("EX_C", symbols, 800, publisher::publish));
+      System.out.printf("Simulating the market for %d s (seed %d)...%n", runSeconds, seed);
+      scheduler.runUntil(runSeconds * 1_000);
 
-      ExecutorService executor = Executors.newFixedThreadPool(3);
+      // Clear the interrupt from Ctrl+C, or the Kafka producer can't finish sending on close().
+      boolean stoppedEarly = Thread.interrupted();
 
-      try {
-        for (SimulatedExchangeFeedHandler exchange : exchanges) {
-          exchange.start();
-          executor.execute(exchange);
-        }
-
-        Thread.sleep(10_000);
-      } finally {
-        for (SimulatedExchangeFeedHandler exchange : exchanges) {
-          exchange.stop();
-        }
-
-        executor.shutdown();
-
-        if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-          executor.shutdownNow();
-          System.err.println("Feed threads did not stop in time");
-        }
-      }
+      System.out.printf(
+          "%s after %.1f s: published %d messages, dropped %d, delivered %d very late.%n",
+          stoppedEarly ? "Stopped" : "Finished",
+          scheduler.now() / 1_000.0,
+          published[0],
+          market.dropped(),
+          market.late());
     }
   }
 }

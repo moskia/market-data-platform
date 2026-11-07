@@ -3,29 +3,26 @@ package com.marketdata.service.simulator.agents;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.marketdata.service.simulator.MarketSimulation;
+import com.marketdata.service.simulator.MarketSimulation.Listing;
+import com.marketdata.service.simulator.MarketSimulation.Settings;
 import com.marketdata.service.simulator.exchange.Exchange;
-import com.marketdata.service.simulator.scheduler.AgentTurns;
 import com.marketdata.service.simulator.scheduler.EventScheduler;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 /**
- * Three exchanges quoting one shared fair price, each with its own market maker and noise traders.
- * Every simulated millisecond we look at all three books, exactly as they are (no delay), and
- * record whether the market as a whole is crossed.
+ * The real market, for one symbol, with and without the arbitrageur. Every simulated millisecond we
+ * look at all three books, exactly as they are (no delay), and record whether the market as a
+ * whole is crossed.
  */
 class ThreeExchangeSimulationTest {
 
-  private static final List<String> EXCHANGES = List.of("EX_A", "EX_B", "EX_C");
-  private static final long[] FEED_DELAYS_MS = {2, 5, 8};
   private static final long RUN_MS = 10 * 60 * 1_000;
 
   /** What one run measured. */
-  private record Result(
-      long crossedMs, int crosses, long longestCrossMs, int exchangeCrossedMs) {
+  private record Result(long crossedMs, int crosses, long longestCrossMs, int exchangeCrossedMs) {
     double crossedPercent() {
       return 100.0 * crossedMs / RUN_MS;
     }
@@ -73,32 +70,9 @@ class ThreeExchangeSimulationTest {
   }
 
   private static Result run(long seed, boolean withArbitrageur) {
-    Random random = new Random(seed);
     EventScheduler scheduler = new EventScheduler();
-    FundamentalValue fundamental = new FundamentalValue(10000, 3, random);
-    Arbitrageur arbitrageur = new Arbitrageur("arb", scheduler, 3, 100);
-    List<Exchange> exchanges = new ArrayList<>();
-
-    for (int i = 0; i < EXCHANGES.size(); i++) {
-      Exchange exchange =
-          new Exchange(
-              EXCHANGES.get(i),
-              List.of("AAPL"),
-              withArbitrageur ? scheduler.delayed(FEED_DELAYS_MS[i], arbitrageur::onQuote) : e -> {});
-      exchanges.add(exchange);
-      arbitrageur.connect(exchange);
-
-      String id = EXCHANGES.get(i);
-      AgentTurns.start(
-          scheduler,
-          new MarketMaker("mm-" + id, exchange, "AAPL", fundamental::current, 5, 100),
-          100,
-          random);
-      AgentTurns.start(scheduler, new NoiseTrader("noise1-" + id, exchange, "AAPL", random), 200, random);
-      AgentTurns.start(scheduler, new NoiseTrader("noise2-" + id, exchange, "AAPL", random), 300, random);
-    }
-
-    AgentTurns.start(scheduler, fundamental::step, 50, random);
+    Settings settings = new Settings(List.of(new Listing("AAPL", 10000)), seed, withArbitrageur);
+    List<Exchange> exchanges = new MarketSimulation(scheduler, settings, quote -> {}).exchanges();
 
     long[] crossedMs = {0};
     int[] crosses = {0};

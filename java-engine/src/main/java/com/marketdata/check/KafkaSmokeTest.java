@@ -2,16 +2,15 @@ package com.marketdata.check;
 
 import com.marketdata.kafka.KafkaConfig;
 import com.marketdata.kafka.simulator.KafkaQuotePublisher;
-import com.marketdata.service.simulator.SimulatedExchangeFeedHandler;
-import java.util.List;
+import com.marketdata.model.RawQuoteEvent;
+import java.time.Instant;
 
+/** Sends one quote to Kafka, to check the connection works. */
 public class KafkaSmokeTest {
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     try (KafkaQuotePublisher publisher = new KafkaQuotePublisher(KafkaConfig.BOOTSTRAP_SERVERS)) {
-      SimulatedExchangeFeedHandler exchange =
-          new SimulatedExchangeFeedHandler("EX_A", List.of("AAPL"), 500, publisher::publish);
-
-      publisher.publish(exchange.generateQuote());
+      Instant now = Instant.now();
+      publisher.publish(new RawQuoteEvent("EX_A", "AAPL", "BID", 190.00, 100, 1, now, now));
     }
   }
 }
