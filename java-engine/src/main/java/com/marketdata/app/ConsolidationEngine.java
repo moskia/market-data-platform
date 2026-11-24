@@ -17,13 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import java.util.Collection;
 
 /**
  * The Kafka thread plus N consolidation workers. {@link #run()} blocks until {@link #shutdown()}
@@ -40,6 +38,10 @@ public class ConsolidationEngine {
       String offsetReset,
       Map<String, Integer> routingTable,
       int workerCount) {}
+
+  // How far back a newly received partition is re-read: the quote lifetime, since older quotes
+  // have expired anyway.
+  private static final Duration REBUILD_WINDOW = Duration.ofSeconds(5);
 
   private final Config config;
 
@@ -98,19 +100,10 @@ public class ConsolidationEngine {
           thread.start();
         }
 
-        consumer.subscribe(
-            List.of(config.inputTopic()),
-            new ConsumerRebalanceListener() {
-              @Override
-              public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-                System.out.println("Partitions taken away: " + partitionNumbers(partitions));
-              }
-
-              @Override
-              public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-                System.out.println("Partitions given to this engine: " + partitionNumbers(partitions));
-              }
-            });
+        PartitionTracker partitions =
+            new PartitionTracker(
+                consumer, REBUILD_WINDOW, symbol -> workers.get(router.workerFor(symbol)));
+        consumer.subscribe(List.of(config.inputTopic()), partitions);
 
         System.out.println("Waiting for market data...");
 
@@ -123,6 +116,8 @@ public class ConsolidationEngine {
 
               int workerIndex = router.workerFor(quote.symbol());
 
+              partitions.beforeQuote(
+                  quote.symbol(), new TopicPartition(record.topic(), record.partition()));
               workers.get(workerIndex).submit(quote);
 
             } catch (JsonProcessingException | IllegalArgumentException e) {
@@ -131,6 +126,8 @@ public class ConsolidationEngine {
                   record.partition(), record.offset(), e.getMessage());
             }
           }
+
+          partitions.afterPoll();
         }
       } catch (WakeupException e) {
         // Step b: expected on shutdown, poll() was woken up by shutdown()
@@ -157,9 +154,5 @@ public class ConsolidationEngine {
         }
       }
     } // Step a: try-with-resources closes the publisher and the consumer here
-  }
-
-  private static List<Integer> partitionNumbers(Collection<TopicPartition> partitions) {
-    return partitions.stream().map(TopicPartition::partition).sorted().toList();
   }
 }

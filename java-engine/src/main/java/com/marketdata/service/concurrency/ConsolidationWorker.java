@@ -28,7 +28,11 @@ public class ConsolidationWorker implements Runnable {
         this.consolidationService = consolidationService;
     }
 
-    /** Runs {@code command} on this worker's thread, before any quote submitted after this call. */
+    /**
+     * Runs {@code command} on this worker's thread, before any quote submitted after this call.
+     * It may also run before older quotes that are still waiting: all waiting commands run before
+     * the next quote is taken.
+     */
     public void command(Consumer<ConsolidationService> command) {
         commands.offer(command);
     }
