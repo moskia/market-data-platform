@@ -34,7 +34,7 @@ class MarketSimulationTest {
             .map(quote -> quote.exchangeId() + " " + quote.symbol())
             .collect(Collectors.toSet());
 
-    assertEquals(9, pairs.size(), "Exchange/symbol pairs seen: " + pairs);
+    assertEquals(3 * 20, pairs.size(), "Exchange/symbol pairs seen: " + pairs);
   }
 
   @Test

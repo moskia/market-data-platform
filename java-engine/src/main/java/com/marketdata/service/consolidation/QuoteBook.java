@@ -41,6 +41,11 @@ public class QuoteBook {
     return true;
   }
 
+  /** Drops every stored quote for this symbol, from every exchange and side. */
+  public void removeSymbol(String symbol) {
+    latestQuotes.keySet().removeIf(key -> key.symbol().equals(symbol));
+  }
+
   public int size() {
     return latestQuotes.size();
   }

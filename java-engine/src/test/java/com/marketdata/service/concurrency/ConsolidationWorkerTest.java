@@ -113,6 +113,22 @@ class ConsolidationWorkerTest {
     assertEquals(2, worker.latency().count());
   }
 
+  /** A command given before a quote is always applied before that quote. */
+  @Test
+  void commandsRunBeforeQuotesSubmittedAfterThem() throws InterruptedException {
+    start(Duration.ofSeconds(5));
+
+    worker.command(service -> service.forget("AAPL"));
+    worker.submit(quote("EX_A", "AAPL", "BID", 100.05, 1));
+    worker.command(service -> service.own("AAPL", false));
+    worker.submit(quote("EX_A", "AAPL", "BID", 100.10, 2));
+
+    assertTrue(waitUntil(() -> !published.isEmpty(), 2_000));
+    Thread.sleep(100);
+    assertEquals(1, published.size(), "The quote sent while AAPL was forgotten got through");
+    assertEquals(100.10, published.get(0).bidPrice());
+  }
+
   /** Quotes submitted before stop() must still be processed, and run() must then return. */
   @Test
   void stopDrainsWaitingQuotes() throws InterruptedException {

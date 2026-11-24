@@ -4,6 +4,7 @@
 """
 
 import argparse
+import os
 import signal
 from datetime import datetime, timedelta, timezone
 from typing import List
@@ -67,8 +68,10 @@ class Monitor:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Watches the market data feed for problems.")
-    parser.add_argument("--bootstrap", default="localhost:9092")
-    parser.add_argument("--db", default="monitor.db")
+    parser.add_argument(
+        "--bootstrap", default=os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    )
+    parser.add_argument("--db", default=os.environ.get("MONITOR_DB", "monitor.db"))
     parser.add_argument("--group", default="market-data-monitor")
     args = parser.parse_args()
 

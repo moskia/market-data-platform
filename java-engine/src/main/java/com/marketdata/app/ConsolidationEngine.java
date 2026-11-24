@@ -17,10 +17,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import java.util.Collection;
 
 /**
  * The Kafka thread plus N consolidation workers. {@link #run()} blocks until {@link #shutdown()}
@@ -95,7 +98,19 @@ public class ConsolidationEngine {
           thread.start();
         }
 
-        consumer.subscribe(List.of(config.inputTopic()));
+        consumer.subscribe(
+            List.of(config.inputTopic()),
+            new ConsumerRebalanceListener() {
+              @Override
+              public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+                System.out.println("Partitions taken away: " + partitionNumbers(partitions));
+              }
+
+              @Override
+              public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+                System.out.println("Partitions given to this engine: " + partitionNumbers(partitions));
+              }
+            });
 
         System.out.println("Waiting for market data...");
 
@@ -142,5 +157,9 @@ public class ConsolidationEngine {
         }
       }
     } // Step a: try-with-resources closes the publisher and the consumer here
+  }
+
+  private static List<Integer> partitionNumbers(Collection<TopicPartition> partitions) {
+    return partitions.stream().map(TopicPartition::partition).sorted().toList();
   }
 }

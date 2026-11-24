@@ -8,7 +8,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 public final class KafkaConfig {
 
-  public static final String BOOTSTRAP_SERVERS = "localhost:9092";
+  /** Where Kafka is: set KAFKA_BOOTSTRAP_SERVERS in a container (e.g. kafka:29092). */
+  public static final String BOOTSTRAP_SERVERS =
+      System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
   public static final String RAW_FEED_TOPIC = "raw-feed-events";
   public static final String CONSOLIDATED_BOOK_TOPIC = "consolidated-book";
 
@@ -38,6 +40,10 @@ public final class KafkaConfig {
         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     properties.put(
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    // Notice a crashed consumer after 6 s instead of Kafka's default 45 s (6 s is the smallest
+    // the broker accepts by default); a heartbeat every 2 s keeps a healthy one in the group.
+    properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 6_000);
+    properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 2_000);
     return properties;
   }
 }

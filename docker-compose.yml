@@ -56,5 +56,65 @@ services:
     entrypoint: ["/bin/bash", "/init-kafka.sh"]
 
 
+  # --- The platform: started only with `docker compose --profile platform up`. -----------------
+  # Without the profile, `docker compose up` starts only Kafka, for the scripts and tests that run
+  # the Java and Python programs on this machine.
+
+  engine:
+    profiles: ["platform"]
+    build: ./java-engine
+    image: market-data/java-engine:dev
+    command: ["com.marketdata.app.MarketDataConsumerMain"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  simulator:
+    profiles: ["platform"]
+    image: market-data/java-engine:dev
+    command: ["com.marketdata.app.MarketDataSimulatorMain", "0"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      engine:
+        condition: service_started
+    restart: unless-stopped
+
+  monitor:
+    profiles: ["platform"]
+    build: ./python-monitor
+    image: market-data/python-monitor:dev
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    volumes:
+      - monitor-data:/data
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  dashboard:
+    profiles: ["platform"]
+    image: market-data/python-monitor:dev
+    command:
+      - streamlit
+      - run
+      - dashboard/app.py
+      - --server.headless=true
+      - --browser.gatherUsageStats=false
+    ports:
+      - "8501:8501"
+    volumes:
+      - monitor-data:/data
+    depends_on:
+      monitor:
+        condition: service_started
+    restart: unless-stopped
+
+
 volumes:
   kafka-data:
+  monitor-data:

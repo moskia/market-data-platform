@@ -9,8 +9,8 @@ import com.marketdata.service.simulator.scheduler.RealTimePacer;
 /**
  * Runs the simulated market in real time and publishes every price message to Kafka.
  *
- * <p>Arguments (both optional): how many seconds to run (default 10), and the seed (default:
- * random, printed so a run can be repeated).
+ * <p>Arguments (both optional): how many seconds to run (default 10; 0 = until stopped), and the
+ * seed (default: random, printed so a run can be repeated).
  */
 public class MarketDataSimulatorMain {
   private static final long DEFAULT_RUN_SECONDS = 10;
@@ -50,8 +50,11 @@ public class MarketDataSimulatorMain {
               });
 
       System.out.printf(
-          "Simulating the market for %d s (seed %d, session %d)...%n", runSeconds, seed, sessionId);
-      scheduler.runUntil(runSeconds * 1_000);
+          "Simulating the market for %s (seed %d, session %d)...%n",
+          runSeconds == 0 ? "as long as it runs" : runSeconds + " s",
+          seed,
+          sessionId);
+      scheduler.runUntil(runSeconds == 0 ? Long.MAX_VALUE : runSeconds * 1_000);
 
       // Clear the interrupt from Ctrl+C, or the Kafka producer can't finish sending on close().
       boolean stoppedEarly = Thread.interrupted();

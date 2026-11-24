@@ -31,12 +31,36 @@ public class MarketSimulation {
     /** What the simulator program runs. */
     public static Settings standard(long seed, long sessionId) {
       return new Settings(
-          List.of(new Listing("AAPL", 19000), new Listing("MSFT", 42000), new Listing("GOOG", 17000)),
+          STANDARD_LISTINGS,
           seed,
           sessionId,
           true);
     }
   }
+
+  /** 20 symbols, so that Kafka's hashing spreads them over every partition (8 / 5 / 7 of 3). */
+  private static final List<Listing> STANDARD_LISTINGS =
+      List.of(
+          new Listing("AAPL", 19000),
+          new Listing("MSFT", 42000),
+          new Listing("GOOG", 17000),
+          new Listing("AMZN", 18500),
+          new Listing("NVDA", 12000),
+          new Listing("META", 50000),
+          new Listing("TSLA", 25000),
+          new Listing("JPM", 20000),
+          new Listing("V", 28000),
+          new Listing("MA", 47000),
+          new Listing("UNH", 52000),
+          new Listing("HD", 36000),
+          new Listing("PG", 16500),
+          new Listing("KO", 6000),
+          new Listing("PEP", 17000),
+          new Listing("DIS", 11000),
+          new Listing("NFLX", 65000),
+          new Listing("INTC", 3000),
+          new Listing("AMD", 15000),
+          new Listing("CSCO", 5000));
 
   private static final List<String> EXCHANGE_IDS = List.of("EX_A", "EX_B", "EX_C");
   private static final long[] ARBITRAGEUR_FEED_DELAYS_MS = {2, 5, 8};

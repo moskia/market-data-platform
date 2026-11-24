@@ -85,6 +85,19 @@ class QuoteBookTest {
     assertEquals(99.95, book.bestBid("AAPL").orElseThrow().price());
   }
 
+  @Test
+  void removeSymbolDropsOnlyThatSymbol() {
+    QuoteBook book = new QuoteBook();
+    Instant now = Instant.now();
+    book.update(quote("EX_A", "BID", 100.00, 1));
+    book.update(new RawQuoteEvent("EX_A", "MSFT", "BID", 420.00, 50, 1, 2, now, now));
+
+    book.removeSymbol("AAPL");
+
+    assertTrue(book.bestBid("AAPL").isEmpty());
+    assertTrue(book.bestBid("MSFT").isPresent());
+  }
+
   /** The exchange restarted: its new session counts from 1 again, and that must be accepted. */
   @Test
   void newSessionIsAcceptedEvenThoughItsSequenceStartsAgain() {
