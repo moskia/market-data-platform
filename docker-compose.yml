@@ -27,6 +27,10 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
+      # Topics come only from kafka-init. Otherwise a typo in a topic name, or a program that
+      # starts before kafka-init, silently creates a topic with 1 partition.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
