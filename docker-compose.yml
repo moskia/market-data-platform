@@ -2,6 +2,8 @@ services:
   kafka:
     image: apache/kafka:4.2.0
     container_name: kafka
+    # Time to shut down cleanly before Docker kills it (this machine's default was only 1 s).
+    stop_grace_period: 30s
 
     ports:
       - "9092:9092"
@@ -62,6 +64,8 @@ services:
 
   engine:
     profiles: ["platform"]
+    # Time to drain, publish what's left and leave the Kafka group before Docker kills it.
+    stop_grace_period: 15s
     build: ./java-engine
     image: market-data/java-engine:dev
     command: ["com.marketdata.app.MarketDataConsumerMain"]
@@ -74,6 +78,8 @@ services:
 
   simulator:
     profiles: ["platform"]
+    # Time to drain, publish what's left and leave the Kafka group before Docker kills it.
+    stop_grace_period: 15s
     image: market-data/java-engine:dev
     command: ["com.marketdata.app.MarketDataSimulatorMain", "0"]
     environment:
@@ -85,6 +91,8 @@ services:
 
   monitor:
     profiles: ["platform"]
+    # Time to drain, publish what's left and leave the Kafka group before Docker kills it.
+    stop_grace_period: 15s
     build: ./python-monitor
     image: market-data/python-monitor:dev
     environment:
@@ -98,6 +106,8 @@ services:
 
   dashboard:
     profiles: ["platform"]
+    # Time to drain, publish what's left and leave the Kafka group before Docker kills it.
+    stop_grace_period: 15s
     image: market-data/python-monitor:dev
     command:
       - streamlit
